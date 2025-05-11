@@ -5,6 +5,7 @@ import os
 import json
 import serial
 import spotipy
+import requests
 from spotipy.oauth2 import SpotifyOAuth, SpotifyOauthError
 import pystray
 from pystray import MenuItem as item
@@ -26,15 +27,17 @@ DEFAULT_CONFIG = {
 
 # ─── ABOUT INFO ─────────────────────────────────────────────────────────────────
 CREATOR_NAME = 'Tibor Hoppan'
-APP_VERSION = '0.1.6'
+APP_VERSION = '0.1.7'
+GITHUB_REPO = 'DatGuyShorty/SpotifySongDisplay'  # replace with your GitHub repo
 
 class SettingsDialog(tk.Toplevel):
-    def __init__(self, parent, config, save_callback):
+    def __init__(self, parent, config, save_callback, update_callback):
         super().__init__(parent)
-        self.title('Settings')
+        self.title('Settings & Update')
         self.resizable(False, False)
         self.config = config
         self.save_callback = save_callback
+        self.update_callback = update_callback
         fields = [
             ('Spotify Client ID', 'client_id'),
             ('Spotify Client Secret', 'client_secret'),
@@ -50,7 +53,7 @@ class SettingsDialog(tk.Toplevel):
             entry.insert(0, str(self.config.get(key, '')))
             entry.grid(row=i, column=1, padx=5, pady=2)
             self.entries[key] = entry
-        # About section
+        # About & version section
         row = len(fields)
         sep = tk.Frame(self, height=2, bd=1, relief='sunken')
         sep.grid(row=row, columnspan=2, sticky='we', pady=5)
@@ -60,7 +63,8 @@ class SettingsDialog(tk.Toplevel):
         btn_frame = tk.Frame(self)
         btn_frame.grid(row=row+3, columnspan=2, pady=10)
         tk.Button(btn_frame, text='Save', command=self.on_save).grid(row=0, column=0, padx=5)
-        tk.Button(btn_frame, text='Cancel', command=self.destroy).grid(row=0, column=1, padx=5)
+        tk.Button(btn_frame, text='Update', command=self.on_update).grid(row=0, column=1, padx=5)
+        tk.Button(btn_frame, text='Cancel', command=self.destroy).grid(row=0, column=2, padx=5)
         self.grab_set()
         self.protocol('WM_DELETE_WINDOW', self.destroy)
 
@@ -77,6 +81,9 @@ class SettingsDialog(tk.Toplevel):
         except ValueError as e:
             messagebox.showerror('Invalid Input', str(e))
 
+    def on_update(self):
+        self.update_callback()
+
 class TrayApp:
     def __init__(self):
         self.config = self._load_config()
@@ -92,7 +99,7 @@ class TrayApp:
             menu=pystray.Menu(
                 item('Reconnect', self.reconnect),
                 item('Disconnect', self.disconnect),
-                item('Settings', self.show_settings),
+                item('Settings & Update', self.show_settings),
                 item('Quit', self.quit)
             )
         )
@@ -138,10 +145,27 @@ class TrayApp:
         return img
 
     def show_settings(self, icon, item):
-        # launch a single combined settings & about dialog
         root = tk.Tk(); root.withdraw()
-        dialog = SettingsDialog(root, self.config.copy(), self._save_config)
+        dialog = SettingsDialog(root, self.config.copy(), self._save_config, self.check_for_update)
         root.mainloop()
+
+    def check_for_update(self):
+        try:
+            url = f'https://api.github.com/repos/{GITHUB_REPO}/releases/latest'
+            resp = requests.get(url, timeout=5)
+            data = resp.json()
+            latest = data.get('tag_name')
+            if latest and latest != APP_VERSION:
+                if messagebox.askyesno('Update Available',
+                    f'Version {latest} is available. Download and install?'):
+                    download_url = data['assets'][0]['browser_download_url']
+                    # open download link in browser
+                    import webbrowser
+                    webbrowser.open(download_url)
+            else:
+                messagebox.showinfo('No Update', 'You are on the latest version.')
+        except Exception as e:
+            messagebox.showerror('Update Error', str(e))
 
     def start(self):
         self.reconnect()

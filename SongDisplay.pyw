@@ -26,14 +26,14 @@ DEFAULT_CONFIG = {
 }
 
 # ─── ABOUT INFO ─────────────────────────────────────────────────────────────────
-CREATOR_NAME = 'Tibor Hoppan'
-APP_VERSION = '0.1.8'
+CREATOR_NAME = 'DatGuyShorty'
+APP_VERSION = '0.2.0'
 GITHUB_REPO = 'DatGuyShorty/SpotifySongDisplay'  # replace with your GitHub repo
 
 class SettingsDialog(tk.Toplevel):
     def __init__(self, parent, config, save_callback, update_callback):
         super().__init__(parent)
-        self.title('Settings & Update')
+        self.title('Settings')
         self.resizable(False, False)
         self.config = config
         self.save_callback = save_callback
@@ -86,6 +86,10 @@ class SettingsDialog(tk.Toplevel):
 
 class TrayApp:
     def __init__(self):
+        # Create a hidden root window for message boxes
+        self.hidden_root = tk.Tk()
+        self.hidden_root.withdraw()  # Hide the root window
+
         self.config = self._load_config()
         self.sp = None
         self.serial = None
@@ -144,10 +148,12 @@ class TrayApp:
         draw.ellipse([(8, 8), (56, 56)], fill=color)
         return img
 
-    def show_settings(self, icon, item):
-        root = tk.Tk(); root.withdraw()
-        dialog = SettingsDialog(root, self.config.copy(), self._save_config, self.check_for_update)
+    def show_settings(self, *_):
+        root = tk.Tk()
+        root.withdraw()
+        SettingsDialog(root, self.config.copy(), self._save_config, self.check_for_update)
         root.mainloop()
+        root.destroy()
 
     def check_for_update(self):
         try:
@@ -157,9 +163,9 @@ class TrayApp:
             latest = data.get('tag_name')
             if latest and latest != APP_VERSION:
                 if messagebox.askyesno('Update Available',
-                    f'Version {latest} is available. Download and install?'):
+                                       f'Version {latest} is available. Download and install?'):
                     download_url = data['assets'][0]['browser_download_url']
-                    # open download link in browser
+                    # Open download link in browser
                     import webbrowser
                     webbrowser.open(download_url)
             else:
@@ -170,9 +176,8 @@ class TrayApp:
     def start(self):
         self.reconnect()
         self.poll_thread.start()
-        self.icon.run()
-
-    def reconnect(self, icon=None, item=None):
+        self.icon.run()  # Start the system tray icon event loop
+    def reconnect(self):
         try:
             if self.serial and self.serial.is_open:
                 self.serial.close()
@@ -185,21 +190,24 @@ class TrayApp:
             self.connected = True
             self.icon.icon = self._create_icon('green')
             self.icon.title = 'Connected'
-            self.last_message = None; self.last_state = None
+            self.last_message = None
+            self.last_state = None
         except Exception as e:
             self.connected = False
             self.icon.icon = self._create_icon('red')
-            self.icon.title = f'Error: {e}'
+            self.icon.title = f"Error: {e}"
 
-    def disconnect(self, icon=None, item=None):
+    def disconnect(self):
         if self.serial and self.serial.is_open:
             self.serial.close()
         self.connected = False
         self.icon.icon = self._create_icon('grey')
-        self.icon.title = 'Disconnected'
+        self.icon.title = "Disconnected"
 
-    def quit(self, icon, item):
-        self.disconnect(); icon.stop(); sys.exit()
+    def quit(self):
+        self.disconnect()
+        self.icon.stop()
+        sys.exit()
 
     def _poll_loop(self):
         while True:

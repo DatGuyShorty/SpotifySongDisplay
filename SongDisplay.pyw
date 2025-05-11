@@ -27,7 +27,7 @@ DEFAULT_CONFIG = {
 
 # ─── ABOUT INFO ─────────────────────────────────────────────────────────────────
 CREATOR_NAME = 'DatGuyShorty'
-APP_VERSION = '0.2.0'
+APP_VERSION = '0.2.1'
 GITHUB_REPO = 'DatGuyShorty/SpotifySongDisplay'  # replace with your GitHub repo
 
 class SettingsDialog(tk.Toplevel):
@@ -157,21 +157,31 @@ class TrayApp:
 
     def check_for_update(self):
         try:
-            url = f'https://api.github.com/repos/{GITHUB_REPO}'
+            url = f'https://api.github.com/repos/{GITHUB_REPO}/releases/latest'
             resp = requests.get(url, timeout=5)
+            resp.raise_for_status()  # Raise an error for HTTP issues
             data = resp.json()
             latest = data.get('tag_name')
+
             if latest and latest != APP_VERSION:
                 if messagebox.askyesno('Update Available',
                                        f'Version {latest} is available. Download and install?'):
-                    download_url = data['assets'][0]['browser_download_url']
-                    # Open download link in browser
-                    import webbrowser
-                    webbrowser.open(download_url)
+                    assets = data.get('assets', [])
+                    if assets:
+                        download_url = assets[0].get('browser_download_url')
+                        if download_url:
+                            import webbrowser
+                            webbrowser.open(download_url)
+                        else:
+                            messagebox.showerror('Update Error', 'No download URL found.')
+                    else:
+                        messagebox.showerror('Update Error', 'No assets found for the update.')
             else:
                 messagebox.showinfo('No Update', 'You are on the latest version.')
+        except requests.exceptions.RequestException as e:
+            messagebox.showerror('Update Error', f'Failed to check for updates: {e}')
         except Exception as e:
-            messagebox.showerror('Update Error', str(e))
+            messagebox.showerror('Update Error', f'An unexpected error occurred: {e}')
 
     def start(self):
         self.reconnect()

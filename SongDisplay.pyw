@@ -217,7 +217,8 @@ class TrayApp:
     def quit(self):
         self.disconnect()
         self.icon.stop()
-        sys.exit()
+        self.hidden_root.quit()  # Stop the Tkinter event loop
+        self.hidden_root.destroy()  # Destroy the hidden root window
 
     def _poll_loop(self):
         while True:

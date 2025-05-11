@@ -27,7 +27,7 @@ DEFAULT_CONFIG = {
 
 # ─── ABOUT INFO ─────────────────────────────────────────────────────────────────
 CREATOR_NAME = 'Tibor Hoppan'
-APP_VERSION = '0.1.7'
+APP_VERSION = '0.1.8'
 GITHUB_REPO = 'DatGuyShorty/SpotifySongDisplay'  # replace with your GitHub repo
 
 class SettingsDialog(tk.Toplevel):
@@ -93,13 +93,13 @@ class TrayApp:
         self.last_message = None
         self.last_state = None
         self.icon = pystray.Icon(
-            'SpotifyPi',
+            'SpotifyDisplay',
             self._create_icon('grey'),
             'Disconnected',
             menu=pystray.Menu(
                 item('Reconnect', self.reconnect),
                 item('Disconnect', self.disconnect),
-                item('Settings & Update', self.show_settings),
+                item('Settings', self.show_settings),
                 item('Quit', self.quit)
             )
         )
@@ -151,7 +151,7 @@ class TrayApp:
 
     def check_for_update(self):
         try:
-            url = f'https://api.github.com/repos/{GITHUB_REPO}/releases/latest'
+            url = f'https://api.github.com/repos/{GITHUB_REPO}'
             resp = requests.get(url, timeout=5)
             data = resp.json()
             latest = data.get('tag_name')

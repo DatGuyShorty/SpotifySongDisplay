@@ -27,7 +27,7 @@ DEFAULT_CONFIG = {
 
 # ─── ABOUT INFO ─────────────────────────────────────────────────────────────────
 CREATOR_NAME = 'DatGuyShorty'
-APP_VERSION = '0.2.1'
+APP_VERSION = '0.2.2'
 GITHUB_REPO = 'DatGuyShorty/SpotifySongDisplay'  # replace with your GitHub repo
 
 class SettingsDialog(tk.Toplevel):

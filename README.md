@@ -15,7 +15,7 @@ SpotifySongDisplay is a Python application that displays the currently playing s
 
 - Python 3.7+
 - Spotify Developer account (for API credentials)
-- Supported hardware for serial display (e.g., Arduino, Raspberry Pi, etc.)
+- Supported hardware for serial display (e.g., Arduino, Raspberry Pi, etc.) + 16x2 i2c LCD screen
 - The following Python packages:
   - spotipy
   - pystray

@@ -54,12 +54,8 @@ python SongDisplay.pyw
 - Make sure your Spotify credentials are correct and the redirect URI matches your Spotify app settings.
 - If you encounter errors, check the tray icon for status or error messages.
 
-## License
-
-MIT License
 
 ## Credits
 
 Created by DatGuyShorty
 
-[GitHub Repository](https://github.com/DatGuyShorty/SpotifySongDisplay)
